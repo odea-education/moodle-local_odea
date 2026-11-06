@@ -1,0 +1,16 @@
+{
+  "name": "odea/local-odea",
+  "description": "Dev-only lint toolchain for the local_odea Moodle plugin. The plugin itself has zero runtime dependencies.",
+  "license": "GPL-3.0-or-later",
+  "require-dev": {
+    "moodlehq/moodle-cs": "3.7.0",
+    "phpstan/phpstan": "2.1.17"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

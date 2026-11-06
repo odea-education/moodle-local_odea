@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<ruleset name="local_odea">
+    <description>Moodle coding standard for the local_odea plugin — the same checks the moodle.org Code Checker runs.</description>
+    <arg name="extensions" value="php"/>
+    <arg value="sp"/>
+    <file>.</file>
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>.composer/*</exclude-pattern>
+    <rule ref="moodle"/>
+</ruleset>

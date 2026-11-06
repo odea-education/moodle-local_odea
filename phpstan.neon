@@ -1,0 +1,29 @@
+parameters:
+    level: 6
+    paths:
+        - classes
+        - db
+        - index.php
+        - settings.php
+        - version.php
+    excludePaths:
+        - vendor
+        - .composer
+    # Moodle core symbols ($CFG, moodle_exception, lti_add_type, ...) are not
+    # installed here — the plugin is linted stand-alone. The stub file
+    # declares every symbol the plugin touches; scanFiles parses it for
+    # symbols without executing it (so builtins are never redeclared).
+    scanFiles:
+        - tools/phpstan-moodle-stubs.php
+    treatPhpDocTypesAsCertain: false
+    # Moodle injects globals into entry scripts ($CFG, $OUTPUT, $PAGE, $USER,
+    # $ADMIN, $plugin, $hassiteconfig) — invisible to PHPStan. Scoped to the
+    # entry files only; classes/ gets no such pass.
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        -
+            identifier: variable.undefined
+            paths:
+                - index.php
+                - settings.php
+                - version.php
