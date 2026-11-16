@@ -7,6 +7,9 @@ All notable changes to `local_odea` are documented here.
 - Added Moodle 5.3 support: the service account is created with
   `\core\user::create_user()` where it exists.
 - Fixed the CI matrix, which collapsed to one Moodle version, and added 5.3.
+- The README documents the plugin for Moodle's certification review: supported
+  versions, the settings it changes, roles and capabilities, and the data sent to Odea.
+- The pending status no longer promises an approval email.
 
 ## 0.2.1 (2026-11-06)
 

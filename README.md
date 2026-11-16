@@ -5,76 +5,151 @@ built by Mouseion that answers students' questions from their own course materia
 The plugin is free. It needs the external Odea service to do anything useful: it sets
 up the connection, and Odea does the rest.
 
-The connect page (Site administration → Plugins → Local plugins → Odea connection)
-performs the whole setup that would otherwise take an admin four manual steps:
+- **Plugin type:** local plugin (`local_odea`), installed to `<moodle>/local/odea`.
+- **Supported Moodle versions:** 4.5 (LTS), 5.0, 5.1, 5.2 and 5.3. Every release is
+  tested on each of them with PHP 8.1 to 8.4 on PostgreSQL and MariaDB
+  (`.github/workflows/ci.yml`).
+- **Dependencies:** none beyond Moodle core. No API keys to enter, nothing to install
+  on the server.
+
+## What it does
+
+The connect page (**Site administration → Plugins → Local plugins → Odea connection**)
+performs in one click the setup that would otherwise take an administrator four manual
+steps:
 
 1. Enables web services and the REST protocol.
-2. Creates a dedicated, read-only external service (`local_odea`) with exactly the
+2. Creates a dedicated, read-only external service (`local_odea`) with exactly the six
    functions Odea calls, a service account, a role scoped to those functions, and a
    permanent web service token.
-3. Registers Odea as a site-wide **Active** LTI 1.3 tool (teachers find it in the
-   activity chooser) — no pending review step, no manual key exchange.
-4. Sends the connection bundle (site URL, LTI client id, deployment id, web service
-   token, admin contact) to the Odea backend, which verifies the site by fetching
-   its LTI configuration over TLS and validating the token against the site before
-   anything is stored.
+3. Registers Odea as a site-wide, active LTI 1.3 tool. Teachers find it in the activity
+   chooser, with no manual key exchange.
+4. Sends the connection details to Odea. Odea verifies the site by fetching its LTI
+   configuration over TLS and checking the token against the site before anything is
+   stored.
 
-Schools on their own domain are activated immediately. Sites on shared vendor hosts
-(e.g. `*.moodlecloud.com`) are reviewed by hand, usually within a working day.
+Odea reviews every new site by hand before it is activated, usually within a working
+day. Until then the connect page reports **Almost there**, and launches from the site
+are refused. A site that was approved before reports **Connected** on every later
+connect.
 
 ## Requirements
 
-- Moodle 4.5 (LTS) through 5.3 — see `version.php` for the exact range this release
-  was tested against.
-- A publicly reachable site served over HTTPS. Odea verifies a site by fetching its LTI
-  configuration over TLS, so a site on `localhost` or a private network cannot complete
-  the connection; everything on the Moodle side is still set up.
-- PHP and database versions as required by the Moodle version you run.
+- Moodle 4.5 (LTS) through 5.3.
+- A site reachable from the internet over HTTPS. Odea fetches the site's LTI
+  configuration and calls its web service itself, so a site on `localhost` or a private
+  network cannot complete the connection. Everything on the Moodle side is still set up.
+- Moodle installed at the root of its host (`https://moodle.example.edu`). A site in a
+  subdirectory (`https://example.edu/moodle`) cannot connect yet.
+- Users with an email address on the institution's own domain. Odea admits a launch only
+  from the email domains approved for the institution.
 
-## Install
+## Install and connect
 
-- **From a zip** (admin UI): Site administration → Plugins → Install plugins → upload the
-  release zip (`local_odea-<version>.zip`, produced by `make release`).
-- **From source**: copy this folder to `<moodle>/local/odea`, then visit Site
-  administration → Notifications (or run `php admin/cli/upgrade.php`).
+1. Download `local_odea-<version>.zip` from the
+   [latest release](https://github.com/odea-education/moodle-local_odea/releases/latest).
+2. Go to **Site administration → Plugins → Install plugins**, upload the ZIP and follow
+   the upgrade prompts. Alternatively unzip it to `<moodle>/local/odea` and run
+   `php admin/cli/upgrade.php`.
+3. Go to **Site administration → Plugins → Local plugins → Odea connection**.
+4. Enter your name and your work email, and click **Connect to Odea**. Use an address on
+   the institution's own domain: Odea uses its domain to decide which users belong to
+   the institution, and it is how Odea reaches you.
+5. Once Odea has approved the site, teachers add **Odea** to a course from the activity
+   chooser. It opens in a new window, and teachers and students are signed in through
+   LTI without a separate Odea account.
 
-## What it creates on your site
+To limit Odea to some courses, edit the tool under **Site administration → Plugins →
+Activity modules → External tool → Manage tools** and use **Restrict to category**.
 
-- A web service (`local_odea`), enabled with exactly the read-only functions Odea's
-  Moodle client calls.
-- A dedicated service account (`odea-service`) and role (`odeaws`), scoped to those
-  functions only.
-- A permanent web service token for that account.
-- A site-wide, Active LTI 1.3 tool registration for Odea.
+## Moodle settings it changes
 
-Uninstalling the plugin removes all of the above: the token, service, service account,
-role and the Odea LTI tool it created.
+| Setting                        | Value                                          |
+| ------------------------------ | ---------------------------------------------- |
+| `enablewebservices`            | on                                             |
+| `webserviceprotocols`          | `rest` added                                   |
+| External service `local_odea`  | created, enabled, six read functions           |
+| User `odea-service`            | created, manual auth, not used to log in       |
+| Role `odeaws` (system context) | created and assigned to `odea-service` only    |
+| Web service token              | one permanent token for `odea-service`         |
+| LTI 1.3 tool **Odea**          | created, active, shown in the activity chooser |
 
-## Privacy
+The tool's settings: launch in a new window, send the user's name and email, no
+grades returned to Moodle, no content-item selection.
 
-This plugin stores no personal data of its own, but it does hand Odea two channels to
-read personal data of enrolled users:
+Uninstalling the plugin removes all of the above: the token, the service, the service
+account, the role and the Odea LTI tool. Web services and REST stay enabled, since other
+plugins may rely on them.
 
-- When an administrator runs the connect flow, their name and work email (typed into
-  the connect form) are sent to the Odea backend as the registration contact, together
-  with technical identifiers for this site (its URL, LTI client id, deployment id).
-- The permanent web service token it mints, and the LTI 1.3 tool it registers
-  (`sendname`/`sendemailaddr` on), let Odea read an enrolled user's full name, email
-  address and course enrolments — through the dedicated read-only service and on every
-  LTI launch — for as long as the site stays connected. This is what lets Odea sync
-  courses and identify the launching user; it is not stored by the plugin itself.
+## Roles and capabilities
 
-See `classes/privacy/provider.php` and the `privacy:metadata:*` language strings for
-the full declaration.
+The plugin defines no capabilities of its own.
+
+| Who                | What they can do                                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Site administrator | Open the connect page and connect the site (`moodle/site:config`).                                                         |
+| Teacher            | Add Odea to a course as an External tool activity, with the standard `mod/lti` capabilities. In Odea they are an educator. |
+| Student            | Open the Odea activity in a course they are enrolled in. In Odea they are a student.                                       |
+| `odea-service`     | Read the data listed below through the web service. Nothing else.                                                          |
+
+Odea maps LTI roles as follows: Instructor, Administrator, ContentDeveloper, Manager and
+Officer become educator; TeachingAssistant and Mentor become educator assistant; Learner,
+Member and any other role become student.
+
+The `odeaws` role allows these capabilities, at system context, and nothing more:
+
+| Capability                        | Why                                                                   |
+| --------------------------------- | --------------------------------------------------------------------- |
+| `webservice/rest:use`             | Call the web service over REST.                                       |
+| `moodle/course:view`              | Pass `require_login()` for a course without being enrolled in it.     |
+| `moodle/course:viewhiddencourses` | Include courses that are not yet visible to students.                 |
+| `moodle/course:viewparticipants`  | Required by `core_enrol_get_enrolled_users`.                          |
+| `moodle/course:useremail`         | Return an enrolled user's email when their own setting would hide it. |
+| `moodle/user:viewdetails`         | Required by `core_user_get_users_by_field`.                           |
+| `moodle/site:accessallgroups`     | List enrolled users in courses that use separate groups.              |
+
+`tests/service_account_capabilities_test.php` calls all six functions as this account
+and fails if any capability is missing.
+
+## Data sent to Odea
+
+Odea only reads from Moodle. It never writes to it, and the external service contains
+no write functions.
+
+**When an administrator connects the site**, the plugin sends: the site URL, the LTI
+client id and deployment id, the web service token, the plugin version, and the name and
+work email typed into the connect form. Odea uses them to verify the site, to identify it
+on LTI launches, and to contact the person responsible for the installation.
+
+**When a user opens Odea**, Moodle sends a standard LTI 1.3 launch. Odea reads the user's
+LTI id, email, roles and the course id. It uses the email to find or create the user's
+Odea account and the course id to find the course.
+
+**Through the web service**, using the six functions of the `local_odea` service:
+
+| Function                           | What Odea reads                                       | Why                                                   |
+| ---------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| `core_webservice_get_site_info`    | The token owner's id, full name and username          | Check the token works                                 |
+| `core_user_get_users_by_field`     | A user's id, full name and email                      | Match a Moodle user to an Odea user                   |
+| `core_enrol_get_users_courses`     | A user's courses: id, short and full name, start date | Let a teacher pick which course to connect            |
+| `core_course_get_courses_by_field` | A course's id and names                               | Look up a course                                      |
+| `core_course_get_contents`         | Sections, activities, resources and their files       | Build the course library students ask questions about |
+| `core_enrol_get_enrolled_users`    | Enrolled users' id, full name, email and roles        | Give the right people access to the course in Odea    |
+
+Odea downloads the files of the courses a teacher connects. It reads no grades,
+submissions, forum posts, messages or logs.
+
+The plugin itself stores no personal data. `classes/privacy/provider.php` declares the
+data sent to Odea under the Moodle Privacy API.
 
 ## Settings
 
-`local_odea | baseurl` — the Odea backend origin. Leave the default unless
-Odea support told you otherwise.
+`local_odea | baseurl`: the Odea server URL. Leave the default
+(`https://production-backend.odea.education`) unless Odea support told you otherwise.
 
 ## Development
 
-Lint/type-check (a quick subset of the `moodle-plugin-ci` run Marketplace review uses):
+Lint and type-check (a quick subset of the `moodle-plugin-ci` run Marketplace review uses):
 
 ```bash
 make check   # phpcs (moodle-cs) + phpstan
@@ -89,16 +164,11 @@ make release
 Produces `local_odea-<release>.zip` (the version from `version.php`) with a top-level
 `odea/` folder, excluding dev-only files (`vendor/`, `.composer/`, `composer.*`,
 `phpcs.xml`, `phpstan.neon`, `tools/`, `Makefile`, `.github/`). Verify its contents with
-`unzip -l local_odea-<release>.zip` before uploading to Moodle Marketplace.
+`unzip -l local_odea-<release>.zip` before uploading it anywhere.
 
-## Moodle Marketplace
+## Support and bug tracker
 
-Listed on [Moodle Marketplace](https://marketplace.moodle.com) as `local_odea`. Releases
-are zips of this folder named `local_odea-<version>.zip` (see `make release` above).
-
-## Support / bug tracker
-
-https://github.com/odea-education/moodle-local_odea/issues
+https://github.com/odea-education/moodle-local_odea/issues, or support@mouseion.com.
 
 ## Changelog
 
@@ -106,4 +176,4 @@ See `CHANGES.md`.
 
 ## License
 
-GPL v3 or later — see `LICENSE`.
+GPL v3 or later, see `LICENSE`.

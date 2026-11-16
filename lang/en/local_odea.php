@@ -54,6 +54,6 @@ $string['servicename'] = 'Odea';
 $string['serviceuserlastname'] = 'service account';
 $string['setuppage'] = 'Odea connection';
 $string['statusactive'] = 'Connected. Odea is active for your institution — teachers can now add Odea to their courses from the activity chooser.';
-$string['statuspending'] = 'Almost there. Everything is set up on this site, and Odea will verify your institution by hand — usually within a working day. You will be emailed at the address you entered once it is approved.';
+$string['statuspending'] = 'Almost there. Everything is set up on this site, and Odea will verify your institution by hand, usually within a working day. Teachers can add Odea to their courses once it is approved.';
 $string['tooldescription'] = 'Launch Odea courses from Moodle using LTI 1.3.';
 $string['toolname'] = 'Odea';
