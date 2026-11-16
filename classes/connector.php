@@ -34,7 +34,7 @@ use stdClass;
  * services + REST, enable the dedicated external service holding exactly the
  * read functions Odea calls, create the service account and its role,
  * mint a permanent token, register Odea as an Active LTI 1.3 tool, and
- * POST the whole bundle to the Odea backend. Every step is idempotent,
+ * report the result to the Odea backend. Every step is idempotent,
  * so Reconnect is safe.
  *
  * @package    local_odea
@@ -62,25 +62,9 @@ class connector {
 
     /**
      * Capabilities the service account needs for the service's six functions
-     * (db/services.php), allowed
-     * at system context through the plugin's dedicated role. Every entry is
-     * read-only and traced to a specific gate in Moodle core — see
-     * tests/service_account_capabilities_test.php, which exercises all six
-     * functions as this account against a hidden course with an enrolled
-     * student and a file, and would fail if any of these were missing.
-     *
-     * Capabilities considered and deliberately left out, because nothing
-     * the Odea backend reads needs them:
-     * moodle/course:update (only unlocks manager-only course fields —
-     * idnumber, legacyfiles, calendartype, timecreated, timemodified,
-     * requested, cacherev — and a hidden-course bypass already covered by
-     * viewhiddencourses); moodle/user:update (never checked by any of the
-     * six read functions, only by the write function core_user_update_users,
-     * which this service never calls); moodle/user:viewhiddendetails (in the
-     * no-course branch user_get_users_by_field uses, it only unlocks address,
-     * phone, country, city, timezone, suspended and first/lastaccess — email
-     * visibility there is governed separately by maildisplay and
-     * showuseridentityfields).
+     * (db/services.php), allowed at system context through the plugin's role.
+     * All are read-only. tests/service_account_capabilities_test.php calls the
+     * six functions as this account and fails if one is missing.
      *
      * @var string[]
      */
@@ -118,20 +102,10 @@ class connector {
      * @return connect_result What the Odea backend answered.
      */
     public function connect(string $contactname, string $contactemail): connect_result {
-        global $CFG;
-
         $site = $this->provision_site();
-        $bundle = new install_bundle(
-            $CFG->wwwroot,
-            $site->clientid,
-            $site->toolid,
-            $site->wstoken,
-            $contactname,
-            $contactemail
-        );
 
         try {
-            $result = $this->report_to_odea($bundle);
+            $result = $this->report_to_odea($site, $contactname, $contactemail);
         } catch (moodle_exception $exception) {
             site_connection_failed::create([
                 'context' => context_system::instance(),
@@ -149,13 +123,12 @@ class connector {
     }
 
     /**
-     * What Odea answered the last time it accepted this site's report.
+     * The status Odea answered with the last time it accepted this site's report.
      *
-     * @return connect_result|null Null when Odea never confirmed a connection.
+     * @return string "active", "pending", or "" when Odea never accepted a report.
      */
-    public function last_answer(): ?connect_result {
-        $status = (string) get_config('local_odea', self::STATUS_CONFIG);
-        return $status === '' ? null : new connect_result($status, '');
+    public function last_status(): string {
+        return (string) get_config('local_odea', self::STATUS_CONFIG);
     }
 
     /**
@@ -178,22 +151,32 @@ class connector {
     }
 
     /**
-     * Whether this site already holds a minted Odea token — i.e. the
-     * connect flow ran before, whether or not Odea accepted its report.
+     * Whether the connect flow ran on this site before, whether or not Odea
+     * accepted its report.
      *
      * @return bool
      */
-    public function is_connected(): bool {
+    public function has_token(): bool {
         global $DB;
         $serviceid = $DB->get_field(
             'external_services',
             'id',
-            ['shortname' => self::SERVICE_SHORTNAME]
+            ['shortname' => self::SERVICE_SHORTNAME],
+            MUST_EXIST
         );
-        if (!$serviceid) {
-            return false;
-        }
         return $DB->record_exists('external_tokens', ['externalserviceid' => $serviceid]);
+    }
+
+    /**
+     * Host of the Odea backend, with its port when the URL names one. Moodle
+     * matches a tool's domain against its launch URL up to the first slash.
+     *
+     * @return string "" when the configured backend URL has no host.
+     */
+    public function tool_domain(): string {
+        $base = $this->odea_base_url();
+        $port = parse_url($base, PHP_URL_PORT);
+        return (string) parse_url($base, PHP_URL_HOST) . ($port ? ':' . $port : '');
     }
 
     /**
@@ -283,10 +266,7 @@ class connector {
             set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
         }
         foreach (self::ROLE_CAPABILITIES as $capability) {
-            // Skip capabilities this Moodle version does not define.
-            if ($DB->record_exists('capabilities', ['name' => $capability])) {
-                assign_capability($capability, CAP_ALLOW, $roleid, $context->id, true);
-            }
+            assign_capability($capability, CAP_ALLOW, $roleid, $context->id, true);
         }
         $context->mark_dirty();
         role_assign($roleid, (int) $serviceuser->id, $context->id);
@@ -331,7 +311,7 @@ class connector {
 
         $base = $this->odea_base_url();
         $launchurl = $base . '/lti/launch';
-        $tooldomain = (string) parse_url($base, PHP_URL_HOST) . $this->port_suffix($base);
+        $tooldomain = $this->tool_domain();
 
         // The baseurl column is text and Moodle DML forbids equality on text —
         // tooldomain (varchar) identifies the same tool.
@@ -348,10 +328,7 @@ class connector {
         $config->lti_typename = get_string('toolname', 'local_odea');
         $config->lti_description = get_string('tooldescription', 'local_odea');
         $config->lti_toolurl = $launchurl;
-        // Must be the host serving lti_toolurl, port included — Moodle matches
-        // domain against target_link_uri up to the first slash.
-        $config->lti_tooldomain = (string) parse_url($base, PHP_URL_HOST)
-            . ($this->port_suffix($base));
+        $config->lti_tooldomain = $tooldomain;
         $config->lti_ltiversion = LTI_VERSION_1P3;
         $config->lti_keytype = LTI_JWK_KEYSET;
         $config->lti_publickeyset = $base . '/lti/jwks';
@@ -380,25 +357,39 @@ class connector {
     }
 
     /**
-     * POSTs the install bundle to the Odea backend and interprets the
+     * POSTs the install report to the Odea backend and interprets the
      * JSON answer.
      *
-     * @param install_bundle $bundle Everything the backend needs.
+     * @param provisioned_site $site The credentials provisioning produced.
+     * @param string $contactname Name of the administrator running the install.
+     * @param string $contactemail Work email of that administrator.
      * @return connect_result
      */
-    private function report_to_odea(install_bundle $bundle): connect_result {
+    private function report_to_odea(
+        provisioned_site $site,
+        string $contactname,
+        string $contactemail
+    ): connect_result {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
 
         $endpoint = $this->odea_base_url() . '/lti/plugin/install';
         $curl = new curl();
         $curl->setHeader('Content-Type: application/json');
-        $response = $curl->post($endpoint, json_encode($bundle->to_payload()), [
+        $response = $curl->post($endpoint, json_encode([
+            // The LTI issuer.
+            'platform_url' => $CFG->wwwroot,
+            'client_id' => $site->clientid,
+            'deployment_id' => $site->toolid,
+            'wstoken' => $site->wstoken,
+            'contact_name' => $contactname,
+            'contact_email' => $contactemail,
+            'plugin_version' => (string) get_config('local_odea', 'version'),
+        ]), [
             'CURLOPT_TIMEOUT' => self::REPORT_TIMEOUT_SECONDS,
             'CURLOPT_CONNECTTIMEOUT' => self::REPORT_CONNECT_TIMEOUT_SECONDS,
         ]);
-        $info = $curl->get_info();
-        $httpcode = (int) ($info['http_code'] ?? 0);
+        $httpcode = (int) $curl->get_info()['http_code'];
 
         if ($httpcode === 0) {
             throw new moodle_exception('errorunreachable', 'local_odea', '', $endpoint);
@@ -438,16 +429,5 @@ class connector {
     private function odea_base_url(): string {
         $configured = (string) get_config('local_odea', 'baseurl');
         return rtrim($configured, '/');
-    }
-
-    /**
-     * ":port" when the backend URL carries an explicit port, "" otherwise.
-     *
-     * @param string $url The backend URL.
-     * @return string
-     */
-    private function port_suffix(string $url): string {
-        $port = parse_url($url, PHP_URL_PORT);
-        return $port === null ? '' : ':' . $port;
     }
 }

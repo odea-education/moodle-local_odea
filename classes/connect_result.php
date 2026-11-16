@@ -39,13 +39,4 @@ class connect_result {
         public readonly string $message
     ) {
     }
-
-    /**
-     * Whether the tenant is live and launches will work right away.
-     *
-     * @return bool
-     */
-    public function is_active(): bool {
-        return $this->status === 'active';
-    }
 }

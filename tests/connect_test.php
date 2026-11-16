@@ -50,7 +50,7 @@ final class connect_test extends advanced_testcase {
         $events = $sink->get_events();
         $sink->close();
 
-        $this->assertTrue($result->is_active());
+        $this->assertSame('active', $result->status);
         $this->assertSame('Welcome to Odea.', $result->message);
 
         $connected = array_values(array_filter(
@@ -132,29 +132,29 @@ final class connect_test extends advanced_testcase {
     }
 
     /**
-     * The page reads the last answer on every visit: it must be what Odea said,
-     * and nothing at all before Odea ever accepted a report.
+     * The page reads the last status on every visit: it must be what Odea said,
+     * and empty before Odea ever accepted a report.
      */
     public function test_connect_remembers_what_odea_answered(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         $connector = new connector();
-        $this->assertNull($connector->last_answer());
+        $this->assertSame('', $connector->last_status());
 
         curl::mock_response(json_encode(['status' => 'pending', 'message' => 'Waiting for review.']));
         $connector->connect('Jane Admin', 'jane@school.example');
-        $this->assertFalse($connector->last_answer()->is_active());
+        $this->assertSame('pending', $connector->last_status());
 
         curl::mock_response(json_encode(['status' => 'active', 'message' => 'Welcome to Odea.']));
         $connector->connect('Jane Admin', 'jane@school.example');
-        $this->assertTrue($connector->last_answer()->is_active());
+        $this->assertSame('active', $connector->last_status());
     }
 
     /**
      * A report Odea did not accept says nothing about the site's status, so the
-     * last accepted answer stands — and a site Odea never accepted has none.
+     * last accepted status stands — and a site Odea never accepted has none.
      */
-    public function test_failed_report_leaves_the_last_answer_untouched(): void {
+    public function test_failed_report_leaves_the_last_status_untouched(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         $connector = new connector();
@@ -164,8 +164,8 @@ final class connect_test extends advanced_testcase {
             $connector->connect('Jane Admin', 'jane@school.example');
             $this->fail('Expected a moodle_exception.');
         } catch (moodle_exception $exception) {
-            $this->assertTrue($connector->is_connected());
-            $this->assertNull($connector->last_answer());
+            $this->assertTrue($connector->has_token());
+            $this->assertSame('', $connector->last_status());
         }
         $this->assertDebuggingCalled();
 
@@ -177,7 +177,7 @@ final class connect_test extends advanced_testcase {
             $connector->connect('Jane Admin', 'jane@school.example');
             $this->fail('Expected a moodle_exception.');
         } catch (moodle_exception $exception) {
-            $this->assertTrue($connector->last_answer()->is_active());
+            $this->assertSame('active', $connector->last_status());
         }
         $this->assertDebuggingCalled();
     }

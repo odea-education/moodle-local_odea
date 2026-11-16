@@ -53,8 +53,8 @@ class site_connected extends \core\event\base {
      * @return string
      */
     public function get_description(): string {
-        $status = (string) ($this->other['status'] ?? '');
-        return "The user with id '{$this->userid}' connected this site to Odea (status: '{$status}').";
+        return "The user with id '{$this->userid}' connected this site to Odea "
+            . "(status: '{$this->other['status']}').";
     }
 
     /**

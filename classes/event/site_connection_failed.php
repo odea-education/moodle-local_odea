@@ -53,8 +53,8 @@ class site_connection_failed extends \core\event\base {
      * @return string
      */
     public function get_description(): string {
-        $reason = (string) ($this->other['reason'] ?? '');
-        return "The user with id '{$this->userid}' tried to connect this site to Odea and it failed: '{$reason}'.";
+        return "The user with id '{$this->userid}' tried to connect this site to Odea and it failed: "
+            . "'{$this->other['reason']}'.";
     }
 
     /**

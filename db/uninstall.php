@@ -58,14 +58,10 @@ function xmldb_local_odea_uninstall(): bool {
         delete_role($roleid);
     }
 
-    // The LTI tool(s) pointing at Odea.
+    // The LTI tool. An empty domain would match tools that are not Odea's.
     require_once($CFG->dirroot . '/mod/lti/locallib.php');
-    $baseurl = rtrim((string) get_config('local_odea', 'baseurl'), '/');
-    if ($baseurl !== '') {
-        // Match on tooldomain, not baseurl: baseurl is a text column and Moodle DML
-        // forbids equality comparisons on text.
-        $port = parse_url($baseurl, PHP_URL_PORT);
-        $tooldomain = (string) parse_url($baseurl, PHP_URL_HOST) . ($port === null ? '' : ':' . $port);
+    $tooldomain = (new \local_odea\connector())->tool_domain();
+    if ($tooldomain !== '') {
         $tools = $DB->get_records('lti_types', ['tooldomain' => $tooldomain], '', 'id');
         foreach ($tools as $tool) {
             lti_delete_type((int) $tool->id);

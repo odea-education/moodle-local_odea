@@ -26,11 +26,10 @@ require(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
 admin_externalpage_setup('local_odea_connect');
-require_capability('moodle/site:config', context_system::instance());
 
 $connector = new \local_odea\connector();
 
-$result = null;
+$message = '';
 $error = null;
 if (data_submitted() && confirm_sesskey()) {
     $contactname = trim(required_param('contactname', PARAM_TEXT));
@@ -39,14 +38,14 @@ if (data_submitted() && confirm_sesskey()) {
         $error = get_string('errornocontact', 'local_odea');
     } else {
         try {
-            $result = $connector->connect($contactname, $contactemail);
+            $message = $connector->connect($contactname, $contactemail)->message;
         } catch (moodle_exception $exception) {
             $error = $exception->getMessage();
         }
     }
 }
 
-$answer = $result ?? $connector->last_answer();
+$status = $connector->last_status();
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('connectheading', 'local_odea'));
@@ -55,37 +54,36 @@ if ($error !== null) {
     echo $OUTPUT->notification(s($error), \core\output\notification::NOTIFY_ERROR, false);
 }
 
-if ($answer === null) {
-    $buttonlabel = get_string('connectbutton', 'local_odea');
-    if ($connector->is_connected()) {
-        $buttonlabel = get_string('reconnectbutton', 'local_odea');
-        // Set up here, but Odea never accepted the report. A failed attempt already says why.
-        if ($error === null) {
-            echo $OUTPUT->notification(
-                get_string('statusunknown', 'local_odea'),
-                \core\output\notification::NOTIFY_WARNING,
-                false
-            );
-        }
-    }
-} else if ($answer->is_active()) {
+if ($status === 'active') {
     echo $OUTPUT->notification(
         get_string('statusactive', 'local_odea'),
         \core\output\notification::NOTIFY_SUCCESS,
         false
     );
     $buttonlabel = get_string('reconnectbutton', 'local_odea');
-} else {
+} else if ($status !== '') {
     echo $OUTPUT->notification(
         get_string('statuspending', 'local_odea'),
         \core\output\notification::NOTIFY_INFO,
         false
     );
     $buttonlabel = get_string('checkstatusbutton', 'local_odea');
+} else if ($connector->has_token()) {
+    // Set up here, but Odea never accepted the report. A failed attempt already says why.
+    if ($error === null) {
+        echo $OUTPUT->notification(
+            get_string('statusunknown', 'local_odea'),
+            \core\output\notification::NOTIFY_WARNING,
+            false
+        );
+    }
+    $buttonlabel = get_string('reconnectbutton', 'local_odea');
+} else {
+    $buttonlabel = get_string('connectbutton', 'local_odea');
 }
 
-if ($result !== null && $result->message !== '') {
-    echo html_writer::tag('p', s($result->message));
+if ($message !== '') {
+    echo html_writer::tag('p', s($message));
 }
 
 echo html_writer::tag('p', get_string('connectintro', 'local_odea'));

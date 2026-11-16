@@ -176,7 +176,7 @@ final class connector_test extends advanced_testcase {
 
         external_update_descriptions('local_odea');
 
-        $this->assertTrue((new connector())->is_connected());
+        $this->assertTrue((new connector())->has_token());
         $this->assertSame($site->wstoken, $this->provision()->wstoken);
     }
 }

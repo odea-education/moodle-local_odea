@@ -2,6 +2,13 @@
 
 All notable changes to `local_odea` are documented here.
 
+## 0.2.4 (2026-11-16)
+
+- Simplified the plugin's code. The connect page and the data sent to Odea are unchanged.
+- Connecting now stops with an error when Moodle does not define a capability the
+  service account needs. It skipped such a capability before, which left the account
+  without a permission and no message.
+
 ## 0.2.3 (2026-11-16)
 
 - Fixed: upgrading the plugin deleted the Odea service and its token, which stopped
