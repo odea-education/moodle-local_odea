@@ -2,6 +2,12 @@
 
 All notable changes to `local_odea` are documented here.
 
+## 0.2.2 (2026-11-16)
+
+- Added Moodle 5.3 support: the service account is created with
+  `\core\user::create_user()` where it exists.
+- Fixed the CI matrix, which collapsed to one Moodle version, and added 5.3.
+
 ## 0.2.1 (2026-11-06)
 
 - Prepared for Moodle Marketplace: the plugin is free, so the README and the

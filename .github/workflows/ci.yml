@@ -32,9 +32,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        database: [pgsql, mariadb]
+        # Listed in full: include entries on top of a database axis overwrite each other.
         include:
-          # Moodle 4.5 LTS: PHP 8.1-8.3. Test the min and max supported PHP.
           - moodle-branch: MOODLE_405_STABLE
             php: '8.1'
             database: pgsql
@@ -47,43 +46,30 @@ jobs:
           - moodle-branch: MOODLE_405_STABLE
             php: '8.3'
             database: mariadb
-          # Moodle 5.0-5.2: PHP 8.2-8.4. Test the min and max supported PHP.
           - moodle-branch: MOODLE_500_STABLE
             php: '8.2'
-            database: pgsql
-          - moodle-branch: MOODLE_500_STABLE
-            php: '8.2'
-            database: mariadb
-          - moodle-branch: MOODLE_500_STABLE
-            php: '8.4'
             database: pgsql
           - moodle-branch: MOODLE_500_STABLE
             php: '8.4'
             database: mariadb
           - moodle-branch: MOODLE_501_STABLE
-            php: '8.2'
-            database: pgsql
-          - moodle-branch: MOODLE_501_STABLE
-            php: '8.2'
-            database: mariadb
-          - moodle-branch: MOODLE_501_STABLE
-            php: '8.4'
+            php: '8.3'
             database: pgsql
           - moodle-branch: MOODLE_501_STABLE
             php: '8.4'
             database: mariadb
           - moodle-branch: MOODLE_502_STABLE
-            php: '8.2'
-            database: pgsql
-          - moodle-branch: MOODLE_502_STABLE
-            php: '8.2'
-            database: mariadb
-          - moodle-branch: MOODLE_502_STABLE
-            php: '8.4'
+            php: '8.3'
             database: pgsql
           - moodle-branch: MOODLE_502_STABLE
             php: '8.4'
             database: mariadb
+          - moodle-branch: MOODLE_503_STABLE
+            php: '8.3'
+            database: mariadb
+          - moodle-branch: MOODLE_503_STABLE
+            php: '8.4'
+            database: pgsql
 
     steps:
       - name: Check out repository code

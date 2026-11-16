@@ -128,6 +128,12 @@ class admin_externalpage {
 
 }
 
+namespace core {
+    class user {
+        public static function create_user(\stdClass $user, bool $updatepassword = true, bool $triggerevent = true): int {}
+    }
+}
+
 namespace core_privacy\local\metadata {
 
 /** Privacy API marker for plugins that store no personal data. */

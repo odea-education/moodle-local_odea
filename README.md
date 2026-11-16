@@ -24,7 +24,7 @@ Schools on their own domain are activated immediately. Sites on shared vendor ho
 
 ## Requirements
 
-- Moodle 4.5 (LTS) through 5.2 — see `version.php` for the exact range this release
+- Moodle 4.5 (LTS) through 5.3 — see `version.php` for the exact range this release
   was tested against.
 - A publicly reachable site served over HTTPS. Odea verifies a site by fetching its LTI
   configuration over TLS, so a site on `localhost` or a private network cannot complete

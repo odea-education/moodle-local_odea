@@ -272,7 +272,12 @@ class connector {
         $user->auth = 'manual';
         $user->confirmed = 1;
         $user->mnethostid = $CFG->mnet_localhost_id;
-        $userid = user_create_user($user, true, false);
+        // Moodle 5.3 deprecated user_create_user(); 4.5 to 5.2 have no replacement.
+        if ((int) $CFG->branch >= 503) {
+            $userid = \core\user::create_user($user, true, false);
+        } else {
+            $userid = user_create_user($user, true, false);
+        }
         return $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
     }
 

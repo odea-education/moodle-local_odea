@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_odea';
-$plugin->version   = 2026110600;
+$plugin->version   = 2026111600;
 $plugin->requires  = 2024100700; // Moodle 4.5 LTS.
-$plugin->supported = [405, 502]; // Moodle 4.5 LTS through 5.2.
+$plugin->supported = [405, 503]; // Moodle 4.5 LTS through 5.3.
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.2.1';
+$plugin->release   = '0.2.2';
