@@ -13,3 +13,17 @@ Feature: Connect this site to Odea
     And I should see "Your name"
     And I should see "Your work email"
     And "//input[@type='submit']" "xpath_element" should exist
+
+  Scenario: A site waiting for approval is not reported as connected
+    Given the following config values are set as admin:
+      | status | pending | local_odea |
+    When I navigate to "Plugins > Local plugins > Odea connection" in site administration
+    Then I should see "Almost there"
+    And "//input[@type='submit' and @value='Check status']" "xpath_element" should exist
+
+  Scenario: An approved site is reported as connected
+    Given the following config values are set as admin:
+      | status | active | local_odea |
+    When I navigate to "Plugins > Local plugins > Odea connection" in site administration
+    Then I should see "Connected. Odea is active for your institution"
+    And "//input[@type='submit' and @value='Reconnect']" "xpath_element" should exist

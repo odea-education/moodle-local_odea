@@ -46,74 +46,85 @@ if (data_submitted() && confirm_sesskey()) {
     }
 }
 
+$answer = $result ?? $connector->last_answer();
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('connectheading', 'local_odea'));
 
-if ($result !== null) {
-    $notification = $result->is_active()
-        ? get_string('statusactive', 'local_odea')
-        : get_string('statuspending', 'local_odea');
-    $style = $result->is_active()
-        ? \core\output\notification::NOTIFY_SUCCESS
-        : \core\output\notification::NOTIFY_INFO;
-    echo $OUTPUT->notification($notification, $style, false);
-    if ($result->message !== '') {
-        echo html_writer::tag('p', s($result->message));
-    }
-} else {
-    if ($error !== null) {
-        echo $OUTPUT->notification(s($error), \core\output\notification::NOTIFY_ERROR, false);
-    }
-    if ($connector->is_connected()) {
-        echo $OUTPUT->notification(
-            get_string('alreadyconnected', 'local_odea'),
-            \core\output\notification::NOTIFY_INFO,
-            false
-        );
-    }
-
-    echo html_writer::tag('p', get_string('connectintro', 'local_odea'));
-
-    $buttonlabel = $connector->is_connected()
-        ? get_string('reconnectbutton', 'local_odea')
-        : get_string('connectbutton', 'local_odea');
-
-    echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-
-    echo html_writer::start_div('form-group mb-3');
-    echo html_writer::label(get_string('contactname', 'local_odea'), 'id_contactname');
-    echo html_writer::empty_tag('input', [
-        'type' => 'text',
-        'id' => 'id_contactname',
-        'name' => 'contactname',
-        'class' => 'form-control',
-        'maxlength' => '255',
-        'required' => 'required',
-        'value' => fullname($USER),
-    ]);
-    echo html_writer::end_div();
-
-    echo html_writer::start_div('form-group mb-3');
-    echo html_writer::label(get_string('contactemail', 'local_odea'), 'id_contactemail');
-    echo html_writer::empty_tag('input', [
-        'type' => 'email',
-        'id' => 'id_contactemail',
-        'name' => 'contactemail',
-        'class' => 'form-control',
-        'maxlength' => '320',
-        'required' => 'required',
-        'value' => $USER->email,
-    ]);
-    echo html_writer::div(get_string('contactemail_help', 'local_odea'), 'form-text text-muted');
-    echo html_writer::end_div();
-
-    echo html_writer::empty_tag('input', [
-        'type' => 'submit',
-        'class' => 'btn btn-primary',
-        'value' => $buttonlabel,
-    ]);
-    echo html_writer::end_tag('form');
+if ($error !== null) {
+    echo $OUTPUT->notification(s($error), \core\output\notification::NOTIFY_ERROR, false);
 }
+
+if ($answer === null) {
+    $buttonlabel = get_string('connectbutton', 'local_odea');
+    if ($connector->is_connected()) {
+        $buttonlabel = get_string('reconnectbutton', 'local_odea');
+        // Set up here, but Odea never accepted the report. A failed attempt already says why.
+        if ($error === null) {
+            echo $OUTPUT->notification(
+                get_string('statusunknown', 'local_odea'),
+                \core\output\notification::NOTIFY_WARNING,
+                false
+            );
+        }
+    }
+} else if ($answer->is_active()) {
+    echo $OUTPUT->notification(
+        get_string('statusactive', 'local_odea'),
+        \core\output\notification::NOTIFY_SUCCESS,
+        false
+    );
+    $buttonlabel = get_string('reconnectbutton', 'local_odea');
+} else {
+    echo $OUTPUT->notification(
+        get_string('statuspending', 'local_odea'),
+        \core\output\notification::NOTIFY_INFO,
+        false
+    );
+    $buttonlabel = get_string('checkstatusbutton', 'local_odea');
+}
+
+if ($result !== null && $result->message !== '') {
+    echo html_writer::tag('p', s($result->message));
+}
+
+echo html_writer::tag('p', get_string('connectintro', 'local_odea'));
+
+echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+
+echo html_writer::start_div('form-group mb-3');
+echo html_writer::label(get_string('contactname', 'local_odea'), 'id_contactname');
+echo html_writer::empty_tag('input', [
+    'type' => 'text',
+    'id' => 'id_contactname',
+    'name' => 'contactname',
+    'class' => 'form-control',
+    'maxlength' => '255',
+    'required' => 'required',
+    'value' => fullname($USER),
+]);
+echo html_writer::end_div();
+
+echo html_writer::start_div('form-group mb-3');
+echo html_writer::label(get_string('contactemail', 'local_odea'), 'id_contactemail');
+echo html_writer::empty_tag('input', [
+    'type' => 'email',
+    'id' => 'id_contactemail',
+    'name' => 'contactemail',
+    'class' => 'form-control',
+    'maxlength' => '320',
+    'required' => 'required',
+    'value' => $USER->email,
+]);
+echo html_writer::div(get_string('contactemail_help', 'local_odea'), 'form-text text-muted');
+echo html_writer::end_div();
+
+echo html_writer::empty_tag('input', [
+    'type' => 'submit',
+    'class' => 'btn btn-primary',
+    'value' => $buttonlabel,
+]);
+echo html_writer::end_tag('form');
 
 echo $OUTPUT->footer();

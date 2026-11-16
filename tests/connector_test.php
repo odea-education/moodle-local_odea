@@ -161,4 +161,22 @@ final class connector_test extends advanced_testcase {
         $tool = $DB->get_record('lti_types', ['id' => (int) $site->toolid]);
         $this->assertSame('localhost:4000', $tool->tooldomain);
     }
+
+    /**
+     * A plugin upgrade keeps the service and its token. Moodle deletes every
+     * service of a component that db/services.php does not declare, tokens
+     * included, each time the plugin is upgraded — and Odea refuses the fresh
+     * token a Reconnect would mint, because it changes the registration.
+     */
+    public function test_plugin_upgrade_keeps_service_and_token(): void {
+        global $CFG;
+        require_once($CFG->libdir . '/upgradelib.php');
+        $this->resetAfterTest();
+        $site = $this->provision();
+
+        external_update_descriptions('local_odea');
+
+        $this->assertTrue((new connector())->is_connected());
+        $this->assertSame($site->wstoken, $this->provision()->wstoken);
+    }
 }

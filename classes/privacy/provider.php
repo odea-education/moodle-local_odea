@@ -40,7 +40,7 @@ use context;
  *   with technical identifiers for this Moodle site;
  * - mint a permanent web service token that lets Odea read enrolled users'
  *   full name, email address and course enrolments through the dedicated
- *   service ({@see \local_odea\connector::SERVICE_FUNCTIONS}), for as long
+ *   service (db/services.php), for as long
  *   as the site stays connected; and
  * - register an LTI 1.3 tool with `sendname`/`sendemailaddr` on, so a
  *   user's full name and email are also sent to Odea on every LTI launch.

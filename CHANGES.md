@@ -2,6 +2,18 @@
 
 All notable changes to `local_odea` are documented here.
 
+## 0.2.3 (2026-11-16)
+
+- Fixed: upgrading the plugin deleted the Odea service and its token, which stopped
+  course sync until an Odea administrator stepped in. The service is now declared in
+  `db/services.php`, so Moodle keeps it. An upgrade from 0.2.2 keeps the existing token.
+- The connect page shows what Odea last answered. It said "This site is connected to
+  Odea" on every visit after the first connect, also while the site still waited for
+  approval, or when Odea never received the connection.
+- While a site waits for approval, the button reads **Check status**.
+- The pending status says teachers can add Odea straight away and that it opens after
+  approval.
+
 ## 0.2.2 (2026-11-16)
 
 - Added Moodle 5.3 support: the service account is created with

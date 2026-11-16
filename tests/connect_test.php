@@ -28,7 +28,7 @@ use moodle_exception;
  * Tests for {@see connector::connect()}: the full flow including the report
  * to Odea, with the outbound HTTP call mocked via {@see curl::mock_response()}
  * so no network access happens. Covers the happy path, the failure path, and
- * the events each one fires.
+ * the events each one fires, and the answer the connect page later shows.
  *
  * @package    local_odea
  * @copyright  2026 Mouseion (https://mouseion.com)
@@ -128,6 +128,57 @@ final class connect_test extends advanced_testcase {
         $this->assertStringNotContainsString('<script', $failed[0]->other['reason']);
         $this->assertStringNotContainsString('<script', $failed[0]->get_description());
 
+        $this->assertDebuggingCalled();
+    }
+
+    /**
+     * The page reads the last answer on every visit: it must be what Odea said,
+     * and nothing at all before Odea ever accepted a report.
+     */
+    public function test_connect_remembers_what_odea_answered(): void {
+        $this->resetAfterTest();
+        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $connector = new connector();
+        $this->assertNull($connector->last_answer());
+
+        curl::mock_response(json_encode(['status' => 'pending', 'message' => 'Waiting for review.']));
+        $connector->connect('Jane Admin', 'jane@school.example');
+        $this->assertFalse($connector->last_answer()->is_active());
+
+        curl::mock_response(json_encode(['status' => 'active', 'message' => 'Welcome to Odea.']));
+        $connector->connect('Jane Admin', 'jane@school.example');
+        $this->assertTrue($connector->last_answer()->is_active());
+    }
+
+    /**
+     * A report Odea did not accept says nothing about the site's status, so the
+     * last accepted answer stands — and a site Odea never accepted has none.
+     */
+    public function test_failed_report_leaves_the_last_answer_untouched(): void {
+        $this->resetAfterTest();
+        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $connector = new connector();
+
+        curl::mock_response('not valid json');
+        try {
+            $connector->connect('Jane Admin', 'jane@school.example');
+            $this->fail('Expected a moodle_exception.');
+        } catch (moodle_exception $exception) {
+            $this->assertTrue($connector->is_connected());
+            $this->assertNull($connector->last_answer());
+        }
+        $this->assertDebuggingCalled();
+
+        curl::mock_response(json_encode(['status' => 'active', 'message' => '']));
+        $connector->connect('Jane Admin', 'jane@school.example');
+
+        curl::mock_response('not valid json');
+        try {
+            $connector->connect('Jane Admin', 'jane@school.example');
+            $this->fail('Expected a moodle_exception.');
+        } catch (moodle_exception $exception) {
+            $this->assertTrue($connector->last_answer()->is_active());
+        }
         $this->assertDebuggingCalled();
     }
 }

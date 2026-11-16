@@ -19,9 +19,9 @@ performs in one click the setup that would otherwise take an administrator four 
 steps:
 
 1. Enables web services and the REST protocol.
-2. Creates a dedicated, read-only external service (`local_odea`) with exactly the six
-   functions Odea calls, a service account, a role scoped to those functions, and a
-   permanent web service token.
+2. Enables its dedicated, read-only external service (`local_odea`), which holds exactly
+   the six functions Odea calls, and creates a service account, a role scoped to those
+   functions, and a permanent web service token.
 3. Registers Odea as a site-wide, active LTI 1.3 tool. Teachers find it in the activity
    chooser, with no manual key exchange.
 4. Sends the connection details to Odea. Odea verifies the site by fetching its LTI
@@ -30,8 +30,8 @@ steps:
 
 Odea reviews every new site by hand before it is activated, usually within a working
 day. Until then the connect page reports **Almost there**, and launches from the site
-are refused. A site that was approved before reports **Connected** on every later
-connect.
+are refused. The page keeps showing what Odea last answered. Click **Check status** on
+it to ask again: once the site is approved it reports **Connected**.
 
 ## Requirements
 
@@ -68,7 +68,7 @@ Activity modules → External tool → Manage tools** and use **Restrict to cate
 | ------------------------------ | ---------------------------------------------- |
 | `enablewebservices`            | on                                             |
 | `webserviceprotocols`          | `rest` added                                   |
-| External service `local_odea`  | created, enabled, six read functions           |
+| External service `local_odea`  | enabled. Installed with the plugin, off before |
 | User `odea-service`            | created, manual auth, not used to log in       |
 | Role `odeaws` (system context) | created and assigned to `odea-service` only    |
 | Web service token              | one permanent token for `odea-service`         |
@@ -92,9 +92,13 @@ The plugin defines no capabilities of its own.
 | Student            | Open the Odea activity in a course they are enrolled in. In Odea they are a student.                                       |
 | `odea-service`     | Read the data listed below through the web service. Nothing else.                                                          |
 
-Odea maps LTI roles as follows: Instructor, Administrator, ContentDeveloper, Manager and
-Officer become educator; TeachingAssistant and Mentor become educator assistant; Learner,
-Member and any other role become student.
+Odea maps the LTI roles Moodle sends at launch:
+
+| LTI role                                                      | Odea role          |
+| ------------------------------------------------------------- | ------------------ |
+| Instructor, Administrator, ContentDeveloper, Manager, Officer | Educator           |
+| TeachingAssistant, Mentor                                     | Educator assistant |
+| Learner, Member, and any other role                           | Student            |
 
 The `odeaws` role allows these capabilities, at system context, and nothing more:
 

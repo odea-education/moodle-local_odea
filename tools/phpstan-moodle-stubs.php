@@ -258,6 +258,7 @@ namespace core\output {
 class notification {
     public const NOTIFY_SUCCESS = 'success';
     public const NOTIFY_INFO = 'info';
+    public const NOTIFY_WARNING = 'warning';
     public const NOTIFY_ERROR = 'error';
 }
 }

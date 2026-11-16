@@ -31,7 +31,7 @@ use stdClass;
  * connection to the Odea backend.
  *
  * One call to {@see connector::connect()} performs, in order: enable web
- * services + REST, create the dedicated external service with exactly the
+ * services + REST, enable the dedicated external service holding exactly the
  * read functions Odea calls, create the service account and its role,
  * mint a permanent token, register Odea as an Active LTI 1.3 tool, and
  * POST the whole bundle to the Odea backend. Every step is idempotent,
@@ -51,6 +51,9 @@ class connector {
     /** @var string Shortname of the role granting the service account read access. */
     private const ROLE_SHORTNAME = 'odeaws';
 
+    /** @var string Plugin config key holding the status Odea last answered with. */
+    private const STATUS_CONFIG = 'status';
+
     /** @var int Seconds to wait for the Odea backend to answer the install report. */
     private const REPORT_TIMEOUT_SECONDS = 10;
 
@@ -58,22 +61,8 @@ class connector {
     private const REPORT_CONNECT_TIMEOUT_SECONDS = 5;
 
     /**
-     * The web service functions Odea's Moodle client calls. This list
-     * mirrors the Odea backend's Moodle client — read-only course/enrolment access.
-     *
-     * @var string[]
-     */
-    private const SERVICE_FUNCTIONS = [
-        'core_webservice_get_site_info',
-        'core_user_get_users_by_field',
-        'core_enrol_get_users_courses',
-        'core_course_get_courses_by_field',
-        'core_course_get_contents',
-        'core_enrol_get_enrolled_users',
-    ];
-
-    /**
-     * Capabilities the service account needs for the functions above, allowed
+     * Capabilities the service account needs for the service's six functions
+     * (db/services.php), allowed
      * at system context through the plugin's dedicated role. Every entry is
      * read-only and traced to a specific gate in Moodle core — see
      * tests/service_account_capabilities_test.php, which exercises all six
@@ -151,11 +140,22 @@ class connector {
             throw $exception;
         }
 
+        set_config(self::STATUS_CONFIG, $result->status, 'local_odea');
         site_connected::create([
             'context' => context_system::instance(),
             'other' => ['status' => $result->status],
         ])->trigger();
         return $result;
+    }
+
+    /**
+     * What Odea answered the last time it accepted this site's report.
+     *
+     * @return connect_result|null Null when Odea never confirmed a connection.
+     */
+    public function last_answer(): ?connect_result {
+        $status = (string) get_config('local_odea', self::STATUS_CONFIG);
+        return $status === '' ? null : new connect_result($status, '');
     }
 
     /**
@@ -168,7 +168,7 @@ class connector {
      */
     public function provision_site(): provisioned_site {
         $this->enable_webservices();
-        $service = $this->ensure_service();
+        $service = $this->enable_service();
         $serviceuser = $this->ensure_service_user();
         $this->ensure_role($serviceuser);
         $token = $this->ensure_token($service, $serviceuser);
@@ -179,7 +179,7 @@ class connector {
 
     /**
      * Whether this site already holds a minted Odea token — i.e. the
-     * connect flow ran before. Drives the Connect/Reconnect wording only.
+     * connect flow ran before, whether or not Odea accepted its report.
      *
      * @return bool
      */
@@ -210,38 +210,20 @@ class connector {
     }
 
     /**
-     * Creates (or updates) the dedicated external service and attaches the
-     * read functions Odea calls.
+     * Enables the dedicated external service. Moodle installs it, disabled,
+     * from db/services.php.
      *
      * @return stdClass The external_services record.
      */
-    private function ensure_service(): stdClass {
+    private function enable_service(): stdClass {
         global $CFG;
         require_once($CFG->dirroot . '/webservice/lib.php');
         $manager = new \webservice();
 
-        $service = $manager->get_external_service_by_shortname(self::SERVICE_SHORTNAME);
-        if (!$service) {
-            $definition = new stdClass();
-            $definition->name = get_string('servicename', 'local_odea');
-            $definition->shortname = self::SERVICE_SHORTNAME;
-            $definition->enabled = 1;
-            $definition->restrictedusers = 0;
-            $definition->downloadfiles = 1;
-            $definition->uploadfiles = 0;
-            $definition->requiredcapability = '';
-            $definition->component = 'local_odea';
-            $serviceid = $manager->add_external_service($definition);
-            $service = $manager->get_external_service_by_id($serviceid);
-        } else if (!$service->enabled) {
+        $service = $manager->get_external_service_by_shortname(self::SERVICE_SHORTNAME, MUST_EXIST);
+        if (!$service->enabled) {
             $service->enabled = 1;
             $manager->update_external_service($service);
-        }
-
-        foreach (self::SERVICE_FUNCTIONS as $function) {
-            if (!$manager->service_function_exists($function, (int) $service->id)) {
-                $manager->add_external_function_to_service($function, (int) $service->id);
-            }
         }
         return $service;
     }

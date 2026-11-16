@@ -31,7 +31,7 @@ use core_external\external_api;
  * against the hardest fixture available: a hidden course, an enrolled
  * student who hid their own email (maildisplay = MAILDISPLAY_HIDE) and sits
  * in a separate-groups course the service account is not a member of, and a
- * file resource. Every one of connector::SERVICE_FUNCTIONS is called as the
+ * file resource. Every function of the service (db/services.php) is called as the
  * service account, the same way Moodle core's own external function tests
  * call them (directly on the *_external class, capability checks and all —
  * not through external_api::call_external_function(), which additionally
