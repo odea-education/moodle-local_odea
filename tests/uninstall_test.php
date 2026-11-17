@@ -33,8 +33,10 @@ final class uninstall_test extends advanced_testcase {
     /**
      * The token, service, service account, role and LTI tool are all
      * removed by the uninstall hook.
+     *
+     * Verifies ODEA-MOODLE-41.
      */
-    public function test_uninstall_removes_everything_provisioned(): void {
+    public function test_odea_moodle_41_uninstall_removes_everything_provisioned(): void {
         global $CFG, $DB;
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');

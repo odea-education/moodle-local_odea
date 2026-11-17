@@ -6,9 +6,12 @@
 COMPOSER_DIR := .composer
 COMPOSER := $(COMPOSER_DIR)/composer.phar
 
-.PHONY: check lint stan fix deps clean release
+.PHONY: check lint stan trace fix deps clean release
 
-check: lint stan
+check: lint stan trace
+
+trace:
+	sh tools/check-srs-trace.sh
 
 $(COMPOSER):
 	mkdir -p $(COMPOSER_DIR)
@@ -43,7 +46,7 @@ release:
 		--exclude='composer.lock' --exclude='.phpcs-cache' --exclude='phpstan.neon' \
 		--exclude='tools/' --exclude='Makefile' --exclude='.github/' \
 		--exclude='.git/' --exclude='.gitignore' --exclude='build/' \
-		--exclude='phpcs.xml' --exclude='*.zip' \
+		--exclude='phpcs.xml' --exclude='*.zip' --exclude='docs/' \
 		. build/odea/
 	cd build && zip -rq ../local_odea-$(RELEASE).zip odea
 	rm -rf build

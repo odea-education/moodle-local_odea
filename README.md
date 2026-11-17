@@ -162,8 +162,12 @@ data sent to Odea under the Moodle Privacy API.
 Lint and type-check (a quick subset of the `moodle-plugin-ci` run Marketplace review uses):
 
 ```bash
-make check   # phpcs (moodle-cs) + phpstan
+make check   # phpcs (moodle-cs) + phpstan + requirement traceability
 ```
+
+[`docs/SRS.md`](docs/SRS.md) is the software requirements specification (ISO/IEC/IEEE
+29148:2018 structure). It maps every requirement to the test that verifies it, and
+`make check` fails when that mapping no longer matches the tests.
 
 The first run downloads Composer packages into `vendor/`, including the Moodle 5.3.0
 source (about 90 MB to download, 580 MB on disk). PHPStan checks the plugin against that

@@ -35,8 +35,10 @@ final class provider_test extends provider_testcase {
      * naming every field the connect flow, the web service token and the LTI
      * launch send to Odea: the admin's own contact details, this site's
      * identity, and the enrolled user data the token and LTI launches expose.
+     *
+     * Verifies ODEA-MOODLE-43.
      */
-    public function test_get_metadata_declares_external_location_link(): void {
+    public function test_odea_moodle_43_get_metadata_declares_external_location_link(): void {
         $collection = new collection('local_odea');
         $collection = provider::get_metadata($collection);
 

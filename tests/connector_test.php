@@ -60,8 +60,10 @@ final class connector_test extends advanced_testcase {
 
     /**
      * Web services and the REST protocol are enabled site-wide.
+     *
+     * Verifies ODEA-MOODLE-9.
      */
-    public function test_enables_webservices_and_rest(): void {
+    public function test_odea_moodle_9_enables_webservices_and_rest(): void {
         global $CFG;
         $this->resetAfterTest();
         $this->provision();
@@ -73,8 +75,10 @@ final class connector_test extends advanced_testcase {
     /**
      * The dedicated service exists, enabled, with exactly the read functions
      * the Odea backend calls.
+     *
+     * Verifies ODEA-MOODLE-10.
      */
-    public function test_creates_service_with_read_functions(): void {
+    public function test_odea_moodle_10_creates_service_with_read_functions(): void {
         global $DB;
         $this->resetAfterTest();
         $this->provision();
@@ -104,8 +108,10 @@ final class connector_test extends advanced_testcase {
     /**
      * A permanent token exists for the dedicated service account, and the
      * bundle carries it.
+     *
+     * Verifies ODEA-MOODLE-12, ODEA-MOODLE-14.
      */
-    public function test_mints_permanent_token_for_service_account(): void {
+    public function test_odea_moodle_14_mints_permanent_token_for_service_account(): void {
         global $CFG, $DB;
         $this->resetAfterTest();
         $site = $this->provision();
@@ -126,8 +132,10 @@ final class connector_test extends advanced_testcase {
      * The LTI tool is created Active (no pending review), LTI 1.3, pointing
      * at the configured backend — domain matching the launch URL host, port
      * included, per Moodle's domain/target_link_uri check.
+     *
+     * Verifies ODEA-MOODLE-15, ODEA-MOODLE-16.
      */
-    public function test_creates_active_lti13_tool(): void {
+    public function test_odea_moodle_15_creates_active_lti13_tool(): void {
         global $DB;
         $this->resetAfterTest();
         $site = $this->provision();
@@ -145,8 +153,10 @@ final class connector_test extends advanced_testcase {
     /**
      * Provisioning twice changes nothing: same token, same tool, no
      * duplicate service/account rows. This is what makes Reconnect safe.
+     *
+     * Verifies ODEA-MOODLE-18.
      */
-    public function test_provisioning_is_idempotent(): void {
+    public function test_odea_moodle_18_provisioning_is_idempotent(): void {
         global $DB;
         $this->resetAfterTest();
         $first = $this->provision();
@@ -164,8 +174,10 @@ final class connector_test extends advanced_testcase {
      * An explicit port in the backend URL survives into the tool domain —
      * Moodle's LTI_URL_DOMAIN_REGEX compares everything up to the first
      * slash, so dropping it would break local installs.
+     *
+     * Verifies ODEA-MOODLE-16.
      */
-    public function test_tool_domain_keeps_an_explicit_port(): void {
+    public function test_odea_moodle_16_tool_domain_keeps_an_explicit_port(): void {
         global $DB;
         $this->resetAfterTest();
         set_config('baseurl', 'http://localhost:4000', 'local_odea');
@@ -180,8 +192,10 @@ final class connector_test extends advanced_testcase {
      * service of a component that db/services.php does not declare, tokens
      * included, each time the plugin is upgraded — and Odea refuses the fresh
      * token a Reconnect would mint, because it changes the registration.
+     *
+     * Verifies ODEA-MOODLE-19.
      */
-    public function test_plugin_upgrade_keeps_service_and_token(): void {
+    public function test_odea_moodle_19_plugin_upgrade_keeps_service_and_token(): void {
         global $CFG;
         require_once($CFG->libdir . '/upgradelib.php');
         $this->resetAfterTest();
@@ -198,8 +212,10 @@ final class connector_test extends advanced_testcase {
      * get from doing it by hand: the two settings in the config changes
      * report, and Moodle's own events for the service, the account, the role
      * and the token.
+     *
+     * Verifies ODEA-MOODLE-36.
      */
-    public function test_provisioning_logs_what_it_changes(): void {
+    public function test_odea_moodle_36_provisioning_logs_what_it_changes(): void {
         $this->resetAfterTest();
         set_config('enablewebservices', 0);
         set_config('webserviceprotocols', '');
@@ -224,8 +240,10 @@ final class connector_test extends advanced_testcase {
     /**
      * A second run changes nothing, so it logs nothing: a Reconnect must not
      * fill the logs with accounts, tokens and settings that were already there.
+     *
+     * Verifies ODEA-MOODLE-37.
      */
-    public function test_second_run_logs_nothing_new(): void {
+    public function test_odea_moodle_37_second_run_logs_nothing_new(): void {
         global $DB;
         $this->resetAfterTest();
         $this->provision();

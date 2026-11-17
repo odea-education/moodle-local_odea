@@ -39,8 +39,10 @@ final class connect_test extends advanced_testcase {
     /**
      * A successful report triggers site_connected with the backend's status,
      * and connect() returns that status to the caller.
+     *
+     * Verifies ODEA-MOODLE-23, ODEA-MOODLE-38.
      */
-    public function test_connect_success_triggers_site_connected_event(): void {
+    public function test_odea_moodle_23_connect_success_triggers_site_connected_event(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         curl::mock_response(json_encode(['status' => 'active', 'message' => 'Welcome to Odea.']));
@@ -66,8 +68,10 @@ final class connect_test extends advanced_testcase {
      * A malformed backend response triggers site_connection_failed and
      * propagates the moodle_exception to the caller — it never carries the
      * web service token.
+     *
+     * Verifies ODEA-MOODLE-33, ODEA-MOODLE-39, ODEA-MOODLE-40.
      */
-    public function test_connect_failure_triggers_site_connection_failed_event(): void {
+    public function test_odea_moodle_33_connect_failure_triggers_site_connection_failed_event(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         curl::mock_response('not valid json');
@@ -100,8 +104,10 @@ final class connect_test extends advanced_testcase {
     /**
      * No answer from Odea — here a port nothing listens on — fails with the
      * reason curl gave, in the message and in the event.
+     *
+     * Verifies ODEA-MOODLE-29, ODEA-MOODLE-39.
      */
-    public function test_connect_without_an_answer_says_why(): void {
+    public function test_odea_moodle_29_connect_without_an_answer_says_why(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'http://localhost:4000', 'local_odea');
 
@@ -127,8 +133,10 @@ final class connect_test extends advanced_testcase {
     /**
      * A URL this site's own HTTP security refuses to call is never requested,
      * so curl holds no HTTP code at all. That is a failure to reach Odea too.
+     *
+     * Verifies ODEA-MOODLE-30.
      */
-    public function test_connect_to_a_blocked_url_fails_as_unreachable(): void {
+    public function test_odea_moodle_30_connect_to_a_blocked_url_fails_as_unreachable(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'http://localhost:4000', 'local_odea');
         set_config('curlsecurityblockedhosts', 'localhost');
@@ -147,8 +155,10 @@ final class connect_test extends advanced_testcase {
     /**
      * A step on this site that fails before anything is sent to Odea is
      * logged as a failed connection too.
+     *
+     * Verifies ODEA-MOODLE-35.
      */
-    public function test_failed_local_step_triggers_site_connection_failed_event(): void {
+    public function test_odea_moodle_35_failed_local_step_triggers_site_connection_failed_event(): void {
         global $DB;
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
@@ -174,8 +184,10 @@ final class connect_test extends advanced_testcase {
      * event's reason: both must be plain text with no markup, since index.php
      * displays the exception message and Moodle's event viewer displays
      * get_description() to admins.
+     *
+     * Verifies ODEA-MOODLE-34.
      */
-    public function test_connect_never_carries_markup_from_the_backend_body(): void {
+    public function test_odea_moodle_34_connect_never_carries_markup_from_the_backend_body(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         curl::mock_response('<html><body><script>alert(1)</script>Server error</body></html>');
@@ -205,8 +217,10 @@ final class connect_test extends advanced_testcase {
     /**
      * The page reads the last status on every visit: it must be what Odea said,
      * and empty before Odea ever accepted a report.
+     *
+     * Verifies ODEA-MOODLE-23.
      */
-    public function test_connect_remembers_what_odea_answered(): void {
+    public function test_odea_moodle_23_connect_remembers_what_odea_answered(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         $connector = new connector();
@@ -224,8 +238,10 @@ final class connect_test extends advanced_testcase {
     /**
      * A report Odea did not accept says nothing about the site's status, so the
      * last accepted status stands — and a site Odea never accepted has none.
+     *
+     * Verifies ODEA-MOODLE-24.
      */
-    public function test_failed_report_leaves_the_last_status_untouched(): void {
+    public function test_odea_moodle_24_failed_report_leaves_the_last_status_untouched(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         $connector = new connector();

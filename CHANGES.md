@@ -2,6 +2,14 @@
 
 All notable changes to `local_odea` are documented here.
 
+## 0.2.6 (2026-11-17)
+
+- No change to what the plugin does.
+- Added `docs/SRS.md`, the software requirements specification (ISO/IEC/IEEE 29148:2018
+  structure). It maps each requirement to the test that verifies it.
+- Each PHPUnit test is now named after the requirement it verifies, for example
+  `test_odea_moodle_9_enables_webservices_and_rest`.
+
 ## 0.2.5 (2026-11-17)
 
 - Connecting now logs what it changes on the site. Switching on web services and REST

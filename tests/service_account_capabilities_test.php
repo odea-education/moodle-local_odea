@@ -63,8 +63,10 @@ final class service_account_capabilities_test extends advanced_testcase {
      * is present, for a hidden course, an enrolled student who hid their own
      * email, sitting in a separate-groups course, plus a file the student can
      * see.
+     *
+     * Verifies ODEA-MOODLE-13, ODEA-MOODLE-20.
      */
-    public function test_service_account_can_read_everything_odea_needs(): void {
+    public function test_odea_moodle_20_service_account_can_read_everything_odea_needs(): void {
         $this->resetAfterTest();
         set_config('baseurl', 'https://backend.odea.example', 'local_odea');
         $serviceaccount = $this->provision_service_account();
@@ -170,6 +172,8 @@ final class service_account_capabilities_test extends advanced_testcase {
      * would be needed for that, and neither is granted. Left for a product
      * decision — Odea does not currently ask to see draft sections/activities
      * inside a published course, only whole unpublished courses.
+     *
+     * Verifies no requirement: a known limitation, SRS 3.11.
      */
     public function test_hidden_section_content_is_not_synced(): void {
         global $DB;
