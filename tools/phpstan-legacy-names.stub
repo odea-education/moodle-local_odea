@@ -1,0 +1,13 @@
+<?php
+// PHPStan does not follow class_alias(), which is how Moodle keeps its old
+// global class names working. This tells it which real class each one is.
+// Not loaded by Moodle and not PHP an IDE should index, hence the extension.
+
+class moodle_exception extends \core\exception\moodle_exception {}
+class moodle_url extends \core\url {}
+class html_writer extends \core\output\html_writer {}
+abstract class context extends \core\context {}
+class context_system extends \core\context\system {}
+class admin_settingpage extends \core_admin\setting\settingpage\settingpage {}
+class admin_externalpage extends \core_admin\setting\tree\externalpage {}
+class admin_setting_configtext extends \core_admin\setting\setting\configtext {}

@@ -26,10 +26,10 @@ fix: deps
 	vendor/bin/phpcbf || true
 
 stan: deps
-	vendor/bin/phpstan analyse --no-progress
+	vendor/bin/phpstan analyse --no-progress --memory-limit=2G
 
 clean:
-	rm -rf vendor $(COMPOSER_DIR) composer.lock
+	rm -rf vendor $(COMPOSER_DIR)
 
 # Reads $plugin->release from version.php so the zip name always matches
 # what the admin UI and the plugins directory will show for this build.

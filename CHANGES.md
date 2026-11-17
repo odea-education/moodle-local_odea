@@ -2,6 +2,20 @@
 
 All notable changes to `local_odea` are documented here.
 
+## 0.2.5 (2026-11-17)
+
+- Connecting now logs what it changes on the site. Switching on web services and REST
+  appears in the config changes report. Enabling the service, creating the service
+  account and minting the token appear as standard Moodle events. Uninstalling logs the
+  removal of the service.
+- A Reconnect that changes nothing adds no log rows.
+- When Odea gives no answer, the error now names the cause curl reported and says to try
+  again first. It told the administrator to check the server URL before, whatever the cause.
+- When Odea answers with a server error, the page says Odea is temporarily unavailable.
+- A step that fails on the site before anything is sent to Odea is logged as a failed
+  connection.
+- Fixed a PHP warning when the site's own HTTP security settings block the Odea URL.
+
 ## 0.2.4 (2026-11-16)
 
 - Simplified the plugin's code. The connect page and the data sent to Odea are unchanged.

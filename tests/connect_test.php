@@ -98,6 +98,77 @@ final class connect_test extends advanced_testcase {
     }
 
     /**
+     * No answer from Odea — here a port nothing listens on — fails with the
+     * reason curl gave, in the message and in the event.
+     */
+    public function test_connect_without_an_answer_says_why(): void {
+        $this->resetAfterTest();
+        set_config('baseurl', 'http://localhost:4000', 'local_odea');
+
+        $sink = $this->redirectEvents();
+        try {
+            (new connector())->connect('Jane Admin', 'jane@school.example');
+            $this->fail('Expected a moodle_exception.');
+        } catch (moodle_exception $exception) {
+            $this->assertSame('errorunreachable', $exception->errorcode);
+            $this->assertNotSame('', $exception->a['error']);
+            $this->assertStringContainsString($exception->a['error'], $exception->getMessage());
+        }
+        $failed = array_values(array_filter(
+            $sink->get_events(),
+            fn ($event): bool => $event instanceof site_connection_failed
+        ));
+        $sink->close();
+
+        $this->assertCount(1, $failed);
+        $this->assertStringContainsString('http://localhost:4000/lti/plugin/install', $failed[0]->other['reason']);
+    }
+
+    /**
+     * A URL this site's own HTTP security refuses to call is never requested,
+     * so curl holds no HTTP code at all. That is a failure to reach Odea too.
+     */
+    public function test_connect_to_a_blocked_url_fails_as_unreachable(): void {
+        $this->resetAfterTest();
+        set_config('baseurl', 'http://localhost:4000', 'local_odea');
+        set_config('curlsecurityblockedhosts', 'localhost');
+
+        try {
+            (new connector())->connect('Jane Admin', 'jane@school.example');
+            $this->fail('Expected a moodle_exception.');
+        } catch (moodle_exception $exception) {
+            $this->assertSame('errorunreachable', $exception->errorcode);
+            $this->assertSame(get_string('curlsecurityurlblocked', 'admin'), $exception->a['error']);
+        }
+        // Moodle announces every blocked URL through debugging() itself.
+        $this->resetDebugging();
+    }
+
+    /**
+     * A step on this site that fails before anything is sent to Odea is
+     * logged as a failed connection too.
+     */
+    public function test_failed_local_step_triggers_site_connection_failed_event(): void {
+        global $DB;
+        $this->resetAfterTest();
+        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $DB->delete_records('external_services', ['shortname' => 'local_odea']);
+
+        $sink = $this->redirectEvents();
+        try {
+            (new connector())->connect('Jane Admin', 'jane@school.example');
+            $this->fail('Expected a moodle_exception.');
+        } catch (moodle_exception $exception) {
+            $failed = array_filter(
+                $sink->get_events(),
+                fn ($event): bool => $event instanceof site_connection_failed
+            );
+            $this->assertCount(1, $failed);
+        }
+        $sink->close();
+    }
+
+    /**
      * A backend response carrying HTML/script markup (e.g. an error page from a
      * misconfigured reverse proxy) never reaches the exception message or the
      * event's reason: both must be plain text with no markup, since index.php

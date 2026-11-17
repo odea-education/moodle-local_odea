@@ -1,6 +1,5 @@
 vendor/
 .composer/
-composer.lock
 .phpcs-cache
 build/
 local_odea-*.zip

@@ -22,8 +22,9 @@ use moodle_url;
 
 /**
  * Triggered when an administrator attempts to connect this site to
- * Odea and the backend could not be reached, or rejected the install
- * report. Never carries the web service token or any other credential.
+ * Odea and it fails: a step on this site failed, the backend could not be
+ * reached, or it rejected the install report. Never carries the web service
+ * token or any other credential.
  *
  * @package    local_odea
  * @copyright  2026 Mouseion (https://mouseion.com)

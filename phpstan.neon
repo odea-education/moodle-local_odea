@@ -6,21 +6,25 @@ parameters:
         - index.php
         - settings.php
         - version.php
-    excludePaths:
-        - vendor
-        - .composer
-    # Moodle core symbols ($CFG, moodle_exception, lti_add_type, ...) are not
-    # installed here — the plugin is linted stand-alone. The stub file
-    # declares every symbol the plugin touches; scanFiles parses it for
-    # symbols without executing it (so builtins are never redeclared).
+    # Moodle core is not part of this repository. Composer installs the Moodle
+    # 5.3.0 source (composer.json), and PHPStan reads its symbols from there
+    # without running it. 5.3 is the newest supported version and has both
+    # user_create_user() and \core\user::create_user().
+    scanDirectories:
+        - vendor/odea/moodle-source/public
     scanFiles:
-        - tools/phpstan-moodle-stubs.php
+        - tools/phpstan-legacy-names.stub
     treatPhpDocTypesAsCertain: false
     # Moodle injects globals into entry scripts ($CFG, $OUTPUT, $PAGE, $USER,
     # $ADMIN, $plugin, $hassiteconfig) — invisible to PHPStan. Scoped to the
     # entry files only; classes/ gets no such pass.
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
+        # Moodle types this parameter with the old global name `context`, an
+        # alias of \core\context that PHPStan cannot follow (see scanFiles).
+        -
+            message: '#expects context, core\\context\\system given#'
+            path: classes/connector.php
         -
             identifier: variable.undefined
             paths:

@@ -77,6 +77,12 @@ Activity modules → External tool → Manage tools** and use **Restrict to cate
 The tool's settings: launch in a new window, send the user's name and email, no
 grades returned to Moodle, no content-item selection.
 
+Each change is logged where Moodle logs the same change made by hand. The two settings
+appear under **Site administration → Reports → Config changes**. The service, the account,
+the role and the token appear as standard Moodle events under **Reports → Logs**, next to
+the plugin's own **Site connected to Odea** and **Connecting site to Odea failed**. Every
+read Odea makes afterwards is logged by Moodle as a web service call by `odea-service`.
+
 Uninstalling the plugin removes all of the above: the token, the service, the service
 account, the role and the Odea LTI tool. Web services and REST stay enabled, since other
 plugins may rely on them.
@@ -158,6 +164,11 @@ Lint and type-check (a quick subset of the `moodle-plugin-ci` run Marketplace re
 ```bash
 make check   # phpcs (moodle-cs) + phpstan
 ```
+
+The first run downloads Composer packages into `vendor/`, including the Moodle 5.3.0
+source (about 90 MB to download, 580 MB on disk). PHPStan checks the plugin against that
+source, and an IDE that indexes `vendor/` resolves Moodle's classes from it. Nothing in
+`vendor/` ships with the plugin.
 
 ## Release packaging
 

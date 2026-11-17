@@ -19,6 +19,8 @@ declare(strict_types=1);
 namespace local_odea;
 
 use context_system;
+use core\event\webservice_service_updated;
+use core\event\webservice_token_created;
 use core_external\util as external_util;
 use curl;
 use local_odea\event\site_connected;
@@ -102,9 +104,8 @@ class connector {
      * @return connect_result What the Odea backend answered.
      */
     public function connect(string $contactname, string $contactemail): connect_result {
-        $site = $this->provision_site();
-
         try {
+            $site = $this->provision_site();
             $result = $this->report_to_odea($site, $contactname, $contactemail);
         } catch (moodle_exception $exception) {
             site_connection_failed::create([
@@ -180,15 +181,18 @@ class connector {
     }
 
     /**
-     * Enables web services and the REST protocol site-wide.
+     * Enables web services and the REST protocol site-wide. Each change is
+     * written to the config changes report, which set_config() only does when asked.
      */
     private function enable_webservices(): void {
         global $CFG;
-        set_config('enablewebservices', 1);
+        if (empty($CFG->enablewebservices)) {
+            set_config('enablewebservices', 1, null, true);
+        }
         $protocols = empty($CFG->webserviceprotocols) ? [] : explode(',', $CFG->webserviceprotocols);
         if (!in_array('rest', $protocols, true)) {
             $protocols[] = 'rest';
-            set_config('webserviceprotocols', implode(',', $protocols));
+            set_config('webserviceprotocols', implode(',', $protocols), null, true);
         }
     }
 
@@ -207,6 +211,7 @@ class connector {
         if (!$service->enabled) {
             $service->enabled = 1;
             $manager->update_external_service($service);
+            webservice_service_updated::create(['objectid' => $service->id])->trigger();
         }
         return $service;
     }
@@ -239,9 +244,9 @@ class connector {
         $user->mnethostid = $CFG->mnet_localhost_id;
         // Moodle 5.3 deprecated user_create_user(); 4.5 to 5.2 have no replacement.
         if ((int) $CFG->branch >= 503) {
-            $userid = \core\user::create_user($user, true, false);
+            $userid = \core\user::create_user($user);
         } else {
-            $userid = user_create_user($user, true, false);
+            $userid = user_create_user($user);
         }
         return $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
     }
@@ -288,7 +293,7 @@ class connector {
         if ($existing) {
             return $existing->token;
         }
-        return external_util::generate_token(
+        $token = external_util::generate_token(
             EXTERNAL_TOKEN_PERMANENT,
             $service,
             (int) $serviceuser->id,
@@ -297,6 +302,12 @@ class connector {
             '',
             'Odea'
         );
+        webservice_token_created::create([
+            'objectid' => $DB->get_field('external_tokens', 'id', ['token' => $token], MUST_EXIST),
+            'relateduserid' => $serviceuser->id,
+            'other' => ['auto' => false],
+        ])->trigger();
+        return $token;
     }
 
     /**
@@ -389,10 +400,18 @@ class connector {
             'CURLOPT_TIMEOUT' => self::REPORT_TIMEOUT_SECONDS,
             'CURLOPT_CONNECTTIMEOUT' => self::REPORT_CONNECT_TIMEOUT_SECONDS,
         ]);
-        $httpcode = (int) $curl->get_info()['http_code'];
+        // A request this site's own HTTP security blocks never runs and leaves no info.
+        $httpcode = (int) ($curl->get_info()['http_code'] ?? 0);
 
         if ($httpcode === 0) {
-            throw new moodle_exception('errorunreachable', 'local_odea', '', $endpoint);
+            // The error is curl's or Moodle's own text, never the backend's.
+            throw new moodle_exception('errorunreachable', 'local_odea', '', [
+                'endpoint' => $endpoint,
+                'error' => $curl->error,
+            ]);
+        }
+        if ($httpcode >= 500) {
+            throw new moodle_exception('errorunavailable', 'local_odea', '', $httpcode);
         }
 
         $decoded = json_decode((string) $response, true);

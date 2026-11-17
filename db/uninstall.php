@@ -32,13 +32,12 @@ declare(strict_types=1);
 function xmldb_local_odea_uninstall(): bool {
     global $CFG, $DB;
 
-    // Tokens and the service.
+    // The service, with its tokens.
     $serviceid = $DB->get_field('external_services', 'id', ['shortname' => 'local_odea']);
     if ($serviceid) {
-        $DB->delete_records('external_tokens', ['externalserviceid' => $serviceid]);
-        $DB->delete_records('external_services_functions', ['externalserviceid' => $serviceid]);
-        $DB->delete_records('external_services_users', ['externalserviceid' => $serviceid]);
-        $DB->delete_records('external_services', ['id' => $serviceid]);
+        require_once($CFG->dirroot . '/webservice/lib.php');
+        (new \webservice())->delete_service($serviceid);
+        \core\event\webservice_service_deleted::create(['objectid' => $serviceid])->trigger();
     }
 
     // The service account.

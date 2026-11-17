@@ -41,7 +41,17 @@ final class uninstall_test extends advanced_testcase {
         (new connector())->provision_site();
 
         require_once($CFG->dirroot . '/local/odea/db/uninstall.php');
+        $sink = $this->redirectEvents();
         $this->assertTrue(xmldb_local_odea_uninstall());
+        $fired = [];
+        foreach ($sink->get_events() as $event) {
+            $fired[] = $event->eventname;
+        }
+        $sink->close();
+
+        $this->assertContains('\\core\\event\\webservice_service_deleted', $fired);
+        $this->assertContains('\\core\\event\\user_deleted', $fired);
+        $this->assertContains('\\core\\event\\role_deleted', $fired);
 
         $this->assertFalse($DB->record_exists('external_services', ['shortname' => 'local_odea']));
         $this->assertFalse($DB->record_exists('user', [

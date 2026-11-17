@@ -46,6 +46,19 @@ final class connector_test extends advanced_testcase {
     }
 
     /**
+     * The newest value the config changes report holds for a setting. Moodle's
+     * own install already logged one row per setting.
+     *
+     * @param string $name The setting.
+     * @return string
+     */
+    private function last_config_change(string $name): string {
+        global $DB;
+        $rows = $DB->get_records('config_log', ['name' => $name], 'id DESC', 'id, value', 0, 1);
+        return reset($rows)->value;
+    }
+
+    /**
      * Web services and the REST protocol are enabled site-wide.
      */
     public function test_enables_webservices_and_rest(): void {
@@ -178,5 +191,58 @@ final class connector_test extends advanced_testcase {
 
         $this->assertTrue((new connector())->has_token());
         $this->assertSame($site->wstoken, $this->provision()->wstoken);
+    }
+
+    /**
+     * Each step that changes the site leaves the row an administrator would
+     * get from doing it by hand: the two settings in the config changes
+     * report, and Moodle's own events for the service, the account, the role
+     * and the token.
+     */
+    public function test_provisioning_logs_what_it_changes(): void {
+        $this->resetAfterTest();
+        set_config('enablewebservices', 0);
+        set_config('webserviceprotocols', '');
+
+        $sink = $this->redirectEvents();
+        $this->provision();
+        $fired = [];
+        foreach ($sink->get_events() as $event) {
+            $fired[] = $event->eventname;
+        }
+        $sink->close();
+
+        $this->assertContains('\\core\\event\\webservice_service_updated', $fired);
+        $this->assertContains('\\core\\event\\user_created', $fired);
+        $this->assertContains('\\core\\event\\role_created', $fired);
+        $this->assertContains('\\core\\event\\role_assigned', $fired);
+        $this->assertContains('\\core\\event\\webservice_token_created', $fired);
+        $this->assertSame('1', $this->last_config_change('enablewebservices'));
+        $this->assertSame('rest', $this->last_config_change('webserviceprotocols'));
+    }
+
+    /**
+     * A second run changes nothing, so it logs nothing: a Reconnect must not
+     * fill the logs with accounts, tokens and settings that were already there.
+     */
+    public function test_second_run_logs_nothing_new(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->provision();
+        $configrows = $DB->count_records('config_log');
+
+        $sink = $this->redirectEvents();
+        $this->provision();
+        $fired = [];
+        foreach ($sink->get_events() as $event) {
+            $fired[] = $event->eventname;
+        }
+        $sink->close();
+
+        $this->assertNotContains('\\core\\event\\webservice_service_updated', $fired);
+        $this->assertNotContains('\\core\\event\\user_created', $fired);
+        $this->assertNotContains('\\core\\event\\role_created', $fired);
+        $this->assertNotContains('\\core\\event\\webservice_token_created', $fired);
+        $this->assertSame($configrows, $DB->count_records('config_log'));
     }
 }
