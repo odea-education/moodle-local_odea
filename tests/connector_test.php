@@ -41,7 +41,8 @@ final class connector_test extends advanced_testcase {
      * @return provisioned_site
      */
     private function provision(): provisioned_site {
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        global $CFG;
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         return (new connector())->provision_site();
     }
 
@@ -178,9 +179,9 @@ final class connector_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-16.
      */
     public function test_odea_moodle_16_tool_domain_keeps_an_explicit_port(): void {
-        global $DB;
+        global $CFG, $DB;
         $this->resetAfterTest();
-        set_config('baseurl', 'http://localhost:4000', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'http://localhost:4000'];
         $site = (new connector())->provision_site();
 
         $tool = $DB->get_record('lti_types', ['id' => (int) $site->toolid]);

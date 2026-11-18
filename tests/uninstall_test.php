@@ -39,7 +39,7 @@ final class uninstall_test extends advanced_testcase {
     public function test_odea_moodle_41_uninstall_removes_everything_provisioned(): void {
         global $CFG, $DB;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         (new connector())->provision_site();
 
         require_once($CFG->dirroot . '/local/odea/db/uninstall.php');

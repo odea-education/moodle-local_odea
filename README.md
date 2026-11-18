@@ -14,7 +14,7 @@ up the connection, and Odea does the rest.
 
 ## What it does
 
-The connect page (**Site administration → Plugins → Local plugins → Odea connection**)
+The connect page (**Site administration → Plugins → Local plugins → Odea**)
 performs in one click the setup that would otherwise take an administrator four manual
 steps:
 
@@ -51,7 +51,7 @@ it to ask again: once the site is approved it reports **Connected**.
 2. Go to **Site administration → Plugins → Install plugins**, upload the ZIP and follow
    the upgrade prompts. Alternatively unzip it to `<moodle>/local/odea` and run
    `php admin/cli/upgrade.php`.
-3. Go to **Site administration → Plugins → Local plugins → Odea connection**.
+3. Go to **Site administration → Plugins → Local plugins → Odea**.
 4. Enter your name and your work email, and click **Connect to Odea**. Use an address on
    the institution's own domain: Odea uses its domain to decide which users belong to
    the institution, and it is how Odea reaches you.
@@ -154,8 +154,8 @@ data sent to Odea under the Moodle Privacy API.
 
 ## Settings
 
-`local_odea | baseurl`: the Odea server URL. Leave the default
-(`https://production-backend.odea.education`) unless Odea support told you otherwise.
+None. The plugin connects to `https://lti.odea.education`, and nothing
+in Moodle can change that address.
 
 ## Development
 

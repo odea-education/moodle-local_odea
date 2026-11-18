@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Admin settings and the connect page registration for local_odea.
+ * Registers the connect page, the one admin entry of local_odea.
  *
  * @package    local_odea
  * @copyright  2026 Mouseion (https://mouseion.com)
@@ -25,20 +25,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $settings = new admin_settingpage('local_odea', get_string('pluginname', 'local_odea'));
-    $ADMIN->add('localplugins', $settings);
-
-    $settings->add(new admin_setting_configtext(
-        'local_odea/baseurl',
-        get_string('baseurl', 'local_odea'),
-        get_string('baseurl_desc', 'local_odea'),
-        'https://production-backend.odea.education',
-        PARAM_URL
-    ));
-
+    // Named after the component, so the Settings link in the plugins overview opens it.
     $ADMIN->add('localplugins', new admin_externalpage(
-        'local_odea_connect',
-        get_string('setuppage', 'local_odea'),
+        'local_odea',
+        get_string('pluginname', 'local_odea'),
         new moodle_url('/local/odea/index.php'),
         'moodle/site:config'
     ));

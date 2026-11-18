@@ -43,8 +43,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-23, ODEA-MOODLE-38.
      */
     public function test_odea_moodle_23_connect_success_triggers_site_connected_event(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         curl::mock_response(json_encode(['status' => 'active', 'message' => 'Welcome to Odea.']));
 
         $sink = $this->redirectEvents();
@@ -72,8 +73,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-33, ODEA-MOODLE-39, ODEA-MOODLE-40.
      */
     public function test_odea_moodle_33_connect_failure_triggers_site_connection_failed_event(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         curl::mock_response('not valid json');
 
         $sink = $this->redirectEvents();
@@ -108,8 +110,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-29, ODEA-MOODLE-39.
      */
     public function test_odea_moodle_29_connect_without_an_answer_says_why(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'http://localhost:4000', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'http://localhost:4000'];
 
         $sink = $this->redirectEvents();
         try {
@@ -137,8 +140,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-30.
      */
     public function test_odea_moodle_30_connect_to_a_blocked_url_fails_as_unreachable(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'http://localhost:4000', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'http://localhost:4000'];
         set_config('curlsecurityblockedhosts', 'localhost');
 
         try {
@@ -159,9 +163,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-35.
      */
     public function test_odea_moodle_35_failed_local_step_triggers_site_connection_failed_event(): void {
-        global $DB;
+        global $CFG, $DB;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         $DB->delete_records('external_services', ['shortname' => 'local_odea']);
 
         $sink = $this->redirectEvents();
@@ -188,8 +192,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-34.
      */
     public function test_odea_moodle_34_connect_never_carries_markup_from_the_backend_body(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         curl::mock_response('<html><body><script>alert(1)</script>Server error</body></html>');
 
         $sink = $this->redirectEvents();
@@ -221,8 +226,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-23.
      */
     public function test_odea_moodle_23_connect_remembers_what_odea_answered(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         $connector = new connector();
         $this->assertSame('', $connector->last_status());
 
@@ -242,8 +248,9 @@ final class connect_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-24.
      */
     public function test_odea_moodle_24_failed_report_leaves_the_last_status_untouched(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         $connector = new connector();
 
         curl::mock_response('not valid json');

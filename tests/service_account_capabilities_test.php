@@ -67,8 +67,9 @@ final class service_account_capabilities_test extends advanced_testcase {
      * Verifies ODEA-MOODLE-13, ODEA-MOODLE-20.
      */
     public function test_odea_moodle_20_service_account_can_read_everything_odea_needs(): void {
+        global $CFG;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         $serviceaccount = $this->provision_service_account();
 
         $course = $this->getDataGenerator()->create_course([
@@ -176,9 +177,9 @@ final class service_account_capabilities_test extends advanced_testcase {
      * Verifies no requirement: a known limitation, SRS 3.11.
      */
     public function test_hidden_section_content_is_not_synced(): void {
-        global $DB;
+        global $CFG, $DB;
         $this->resetAfterTest();
-        set_config('baseurl', 'https://backend.odea.example', 'local_odea');
+        $CFG->forced_plugin_settings['local_odea'] = ['baseurl' => 'https://backend.odea.example'];
         $serviceaccount = $this->provision_service_account();
 
         $course = $this->getDataGenerator()->create_course();

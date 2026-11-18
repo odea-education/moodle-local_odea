@@ -44,6 +44,9 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class connector {
+    /** @var string Origin of the Odea backend. */
+    private const ODEA_BASE_URL = 'https://lti.odea.education';
+
     /** @var string Shortname of the dedicated external service. */
     private const SERVICE_SHORTNAME = 'local_odea';
 
@@ -441,12 +444,15 @@ class connector {
     }
 
     /**
-     * The configured Odea backend origin, without a trailing slash.
+     * The Odea backend origin, without a trailing slash. Not a setting: nothing in
+     * Moodle can change it. config.php can force another one, for Odea's own
+     * development and tests.
      *
      * @return string
      */
     private function odea_base_url(): string {
-        $configured = (string) get_config('local_odea', 'baseurl');
-        return rtrim($configured, '/');
+        global $CFG;
+        $forced = $CFG->forced_plugin_settings['local_odea']['baseurl'] ?? self::ODEA_BASE_URL;
+        return rtrim((string) $forced, '/');
     }
 }

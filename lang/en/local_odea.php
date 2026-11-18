@@ -24,8 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['baseurl'] = 'Odea server URL';
-$string['baseurl_desc'] = 'The Odea backend this site connects to. Leave the default unless Odea support told you otherwise.';
 $string['checkstatusbutton'] = 'Check status';
 $string['connectbutton'] = 'Connect to Odea';
 $string['connectheading'] = 'Connect this site to Odea';
@@ -52,7 +50,6 @@ $string['reconnectbutton'] = 'Reconnect';
 $string['roledescription'] = 'Grants the Odea service account read access to courses, contents and enrolments over the web service API.';
 $string['rolename'] = 'Odea web service';
 $string['serviceuserlastname'] = 'service account';
-$string['setuppage'] = 'Odea connection';
 $string['statusactive'] = 'Connected. Odea is active for your institution. Teachers can add Odea to their courses from the activity chooser.';
 $string['statuspending'] = 'Almost there. Everything is set up on this site, and Odea verifies your institution by hand, usually within a working day. Teachers can already add Odea to their courses, but it opens only after approval. Click Check status to see whether your institution has been approved.';
 $string['statusunknown'] = 'This site is set up for Odea, but Odea has not confirmed the connection. Click Reconnect to finish connecting.';

@@ -3,7 +3,7 @@
 |                    |                                                              |
 | ------------------ | ------------------------------------------------------------ |
 | Product            | Odea for Moodle, Moodle local plugin `local_odea`            |
-| Applies to release | 0.2.6 (`version.php`: 2026111702)                            |
+| Applies to release | 0.2.7 (`version.php`: 2026111800)                            |
 | Publisher          | Mouseion (https://mouseion.com)                              |
 | Licence            | GNU GPL v3 or later                                          |
 | Structure          | ISO/IEC/IEEE 29148:2018, software requirements specification |
@@ -36,7 +36,7 @@ Out of scope: the Odea service itself, the content of its answers, and its user 
 | Term            | Meaning                                                                                                |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
 | Odea            | The hosted service the plugin connects the site to.                                                    |
-| Server URL      | The plugin setting `local_odea/baseurl`: the origin of the Odea backend.                               |
+| Server URL      | The origin of the Odea backend, fixed in the plugin: `https://lti.odea.education`.                     |
 | Connect         | The action an administrator starts from the connect page: provisioning followed by the install report. |
 | Provisioning    | The changes Connect makes on the Moodle site (section 3.3).                                            |
 | Install report  | The one HTTPS request Connect sends to Odea (section 3.4).                                             |
@@ -101,7 +101,7 @@ JavaScript.
 
 | User               | Uses                                                                 | Needs                               |
 | ------------------ | -------------------------------------------------------------------- | ----------------------------------- |
-| Site administrator | The connect page and the Server URL setting                          | The capability `moodle/site:config` |
+| Site administrator | The connect page                                                     | The capability `moodle/site:config` |
 | Teacher            | Adds the Odea activity to a course through Moodle's activity chooser | No interaction with the plugin      |
 | Student            | Opens the Odea activity                                              | No interaction with the plugin      |
 
@@ -123,14 +123,14 @@ JavaScript.
 
 #### 3.1.1 User interface
 
-| Id            | Requirement                                                                                                         | Method                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| ODEA-MOODLE-1 | The plugin shall add a page "Odea connection" under Site administration, Plugins, Local plugins.                    | T                                                                                                    |
-| ODEA-MOODLE-2 | The connect page shall be available only to users holding `moodle/site:config`.                                     | I: `settings.php`, `index.php` (`admin_externalpage_setup`). No test logs in without the capability. |
-| ODEA-MOODLE-3 | The connect page shall show a form with the fields "Your name" and "Your work email" and one submit button.         | T                                                                                                    |
-| ODEA-MOODLE-4 | The form shall be prefilled with the full name and email of the logged-in administrator.                            | I: `index.php`                                                                                       |
-| ODEA-MOODLE-5 | The plugin shall provide one setting, the Server URL, with the default `https://production-backend.odea.education`. | I: `settings.php`                                                                                    |
-| ODEA-MOODLE-6 | All text the plugin shows shall come from its language pack.                                                        | I: `lang/en/local_odea.php`                                                                          |
+| Id            | Requirement                                                                                                          | Method                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| ODEA-MOODLE-1 | The plugin shall add exactly one entry, "Odea", under Site administration, Plugins, Local plugins: the connect page. | T                                                                                                    |
+| ODEA-MOODLE-2 | The connect page shall be available only to users holding `moodle/site:config`.                                      | I: `settings.php`, `index.php` (`admin_externalpage_setup`). No test logs in without the capability. |
+| ODEA-MOODLE-3 | The connect page shall show a form with the fields "Your name" and "Your work email" and one submit button.          | T                                                                                                    |
+| ODEA-MOODLE-4 | The form shall be prefilled with the full name and email of the logged-in administrator.                             | I: `index.php`                                                                                       |
+| ODEA-MOODLE-5 | The plugin shall provide no setting. No page in Moodle shall let an administrator change the Server URL.             | I: `settings.php`, `classes/connector.php` (`odea_base_url`)                                         |
+| ODEA-MOODLE-6 | All text the plugin shows shall come from its language pack.                                                         | I: `lang/en/local_odea.php`                                                                          |
 
 #### 3.1.2 Software interfaces
 
@@ -138,7 +138,7 @@ The plugin uses these Moodle interfaces and no other system's:
 
 | Interface                                             | Used for                                                         |
 | ----------------------------------------------------- | ---------------------------------------------------------------- |
-| Admin settings tree                                   | The setting and the connect page                                 |
+| Admin settings tree                                   | The connect page                                                 |
 | Web services (`external_services`, `external_tokens`) | The service and the token                                        |
 | Access API (roles, capabilities)                      | The role and its assignment                                      |
 | User API                                              | The service account                                              |

@@ -2,6 +2,16 @@
 
 All notable changes to `local_odea` are documented here.
 
+## 0.2.7 (2026-11-18)
+
+- The plugin now adds one entry under Site administration → Plugins → Local plugins,
+  named **Odea**, which opens the connect page. Before, there were two: a settings page
+  and "Odea connection".
+- The Odea server address is no longer a setting. An administrator cannot change where
+  the site connects to.
+- The plugin now connects to `https://lti.odea.education`, Odea's address for LMS
+  integrations. Earlier releases used `https://production-backend.odea.education`.
+
 ## 0.2.6 (2026-11-17)
 
 - No change to what the plugin does.
